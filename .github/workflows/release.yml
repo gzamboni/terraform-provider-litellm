@@ -1,38 +1,45 @@
-# .github/workflows/release.yml
-name: goreleaser
+# Terraform Provider release workflow
+name: Release
 
 on:
   push:
-    branches:
-      - "!*"
     tags:
-      - "v*.*.*"
+      - "v*"
 
+# releases need permissions to read and write the repository contents
 permissions:
   contents: write
-  packages: write
-  # issues: write
-  # id-token: write
 
 jobs:
+  # run acceptance tests
+  tests:
+    uses: ./.github/workflows/testacc.yaml
   goreleaser:
+    # require tests to pass
+    needs: [tests]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
         with:
+          # allow goreleaser to access older tag information
           fetch-depth: 0
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v4
         with:
-          go-version: stable
-      # More assembly might be required: Docker logins, GPG, etc.
-      # It all depends on your needs.
+          go-version-file: "go.mod"
+          cache: true
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v5.2.0
+        id: import_gpg
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v6
+        uses: goreleaser/goreleaser-action@v4.2.0
         with:
-          distribution: goreleaser
-          version: "~> v2"
           args: release --clean
         env:
+          # GitHub sets the GITHUB_TOKEN secret automatically
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
