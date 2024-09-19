@@ -1,8 +1,6 @@
 module github.com/gzamboni/terraform-provider-litellm
 
-go 1.22.0
-
-toolchain go1.22.7
+go 1.23.1
 
 require (
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.34.0
@@ -28,7 +26,8 @@ require (
 	github.com/hashicorp/terraform-registry-address v0.2.3 // indirect
 	github.com/hashicorp/terraform-svchost v0.1.1 // indirect
 	github.com/hashicorp/yamux v0.1.1 // indirect
-	github.com/kr/pretty v0.3.0 // indirect
+	github.com/kr/pretty v0.3.1 // indirect
+	github.com/kr/text v0.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect

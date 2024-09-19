@@ -1,4 +1,4 @@
-package tests
+package provider
 
 import (
 	"context"
@@ -9,8 +9,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/gzamboni/terraform-provider-litellm/provider"
 )
 
 func TestResourceModelCreateUpdateDelete(t *testing.T) {
@@ -53,7 +51,7 @@ func TestResourceModelCreateUpdateDelete(t *testing.T) {
 	})
 
 	// Configure the provider with the mock server URL
-	p := provider.NewProvider()
+	p := NewProvider()
 
 	// Create provider configuration data
 	providerConfig := schema.TestResourceDataRaw(t, p.Schema, map[string]interface{}{

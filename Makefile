@@ -1,12 +1,12 @@
-TEST?=./tests/...
+TEST?=$$(go list ./provider | grep -v 'vendor')
 HOSTNAME=registry.terraform.io
 NAMESPACE=gzamboni
 NAME=litellm
 BINARY=terraform-provider-${NAME}
-VERSION=$$(svu current)
-NEXT_VERSION=$$(svu next)
+VERSION=$(shell svu current)
+NEXT_VERSION=$(shell svu next)
 GOOS=darwin
-GOARCH=amd64
+GOARCH=arm64
 OS_ARCH=${GOOS}_${GOARCH}
 TERRAFORM_PLUGINS=~/.terraform.d/plugins
 
@@ -20,6 +20,7 @@ build: ## Build the provider
 
 release: ### Build and release binaries
 	GOOS=darwin GOARCH=amd64 go build -o ./bin/${BINARY}_${VERSION}_darwin_amd64
+	GOOS=darwin GOARCH=arm64 go build -o ./bin/${BINARY}_${VERSION}_darwin_amd64
 	GOOS=freebsd GOARCH=386 go build -o ./bin/${BINARY}_${VERSION}_freebsd_386
 	GOOS=freebsd GOARCH=amd64 go build -o ./bin/${BINARY}_${VERSION}_freebsd_amd64
 	GOOS=freebsd GOARCH=arm go build -o ./bin/${BINARY}_${VERSION}_freebsd_arm
