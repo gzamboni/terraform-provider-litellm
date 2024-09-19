@@ -44,7 +44,7 @@ Pre-built binaries are not yet available. For now, you need to build the provide
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/yourusername/terraform-provider-litellm.git
+   git clone https://github.com/gzamboni/terraform-provider-litellm.git
    cd terraform-provider-litellm
    ```
 
@@ -59,7 +59,7 @@ Pre-built binaries are not yet available. For now, you need to build the provide
    Create the following directory structure in your Terraform plugins directory:
 
    ```bash
-   mkdir -p ~/.terraform.d/plugins/registry.terraform.io/yourusername/litellm/0.1.0/YOUR_OS_ARCH
+   mkdir -p ~/.terraform.d/plugins/registry.terraform.io/gzamboni/litellm/0.1.0/YOUR_OS_ARCH
    ```
 
    Replace `YOUR_OS_ARCH` with your operating system and architecture, for example:
@@ -71,7 +71,7 @@ Pre-built binaries are not yet available. For now, you need to build the provide
    Move the binary to the appropriate directory:
 
    ```bash
-   mv terraform-provider-litellm ~/.terraform.d/plugins/registry.terraform.io/yourusername/litellm/0.1.0/YOUR_OS_ARCH/
+   mv terraform-provider-litellm ~/.terraform.d/plugins/registry.terraform.io/gzamboni/litellm/0.1.0/YOUR_OS_ARCH/
    ```
 
 ## Usage
@@ -87,7 +87,7 @@ Configure the LiteLLM provider with the required `api_token` and `api_base_url`.
 terraform {
   required_providers {
     litellm = {
-      source  = "registry.terraform.io/yourusername/litellm"
+      source  = "registry.terraform.io/gzamboni/litellm"
       version = "0.1.0"
     }
   }
@@ -151,7 +151,7 @@ If you want to contribute or modify the provider, follow these steps to build it
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/yourusername/terraform-provider-litellm.git
+   git clone https://github.com/gzamboni/terraform-provider-litellm.git
    cd terraform-provider-litellm
    ```
 
