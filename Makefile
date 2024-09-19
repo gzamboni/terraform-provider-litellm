@@ -4,6 +4,7 @@ NAMESPACE=gzamboni
 NAME=litellm
 BINARY=terraform-provider-${NAME}
 VERSION=$$(svu current)
+NEXT_VERSION=$$(svu next)
 GOOS=darwin
 GOARCH=amd64
 OS_ARCH=${GOOS}_${GOARCH}
@@ -38,3 +39,8 @@ install: build ### Build and install the provider to the terraform plugins direc
 test: ## Run tests
 	go test -i $(TEST) || exit 1
 	echo $(TEST) | xargs -t -n4 go test $(TESTARGS) -timeout=30s -parallel=4
+
+release: ## Release the provider
+	@echo "Releasing version ${NEXT_VERSION}"
+	git tag -a ${NEXT_VERSION} -m "Release ${NEXT_VERSION}"
+	git push origin ${NEXT_VERSION}
