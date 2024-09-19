@@ -14,6 +14,13 @@ maintaining consistency and version control through Terraform's declarative conf
 
 # litellm_model (Resource)
 
+The `litellm_model` resource allows you to manage AI language models within your LiteLLM Proxy instance using Terraform.
+This resource enables you to automate the creation, updating, and deletion of models, integrating AI model lifecycle
+management into your infrastructure as code practices.
+
+By using `litellm_model`, you can seamlessly incorporate AI capabilities into your applications and services, while
+maintaining consistency and version control through Terraform's declarative configurations.
+
 ## Example Usage
 
 ```terraform
