@@ -4,11 +4,19 @@
 name: CI Tests
 
 on:
-  push:
-    branches: ["main"]
   pull_request:
-    branches: ["main"]
+    types: ["opened", "synchronize"]
+    paths:
+      - "**.go"
+      - go.mod
+      - ".github/workflows/ci-tests.yml"
+  # allow this workflow to be called from other workflows
   workflow_call:
+
+env:
+  GOPROXY: https://proxy.golang.org,direct
+  DEBIAN_FRONTEND: noninteractive
+  GO_VERSION: "1.21"
 
 jobs:
   build:
@@ -19,10 +27,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: "1.21.3"
-
-      - name: Build
-        run: go build -v ./...
+          go-version: ${{ env.GO_VERSION }}
 
       - name: Test
-        run: go test -v ./tests
+        run: make test

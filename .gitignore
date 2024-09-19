@@ -29,3 +29,4 @@ go.work
 bin/
 
 dist/
+terraform-provider-litellm
