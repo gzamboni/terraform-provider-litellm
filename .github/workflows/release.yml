@@ -13,7 +13,7 @@ permissions:
 jobs:
   # run acceptance tests
   tests:
-    uses: ./.github/workflows/ci-tests.yaml
+    uses: ./.github/workflows/ci-tests.yml
   goreleaser:
     # require tests to pass
     needs: [tests]
