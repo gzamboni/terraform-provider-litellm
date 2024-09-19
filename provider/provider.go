@@ -45,6 +45,15 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 		})
 		return nil, diags
 	}
+	if apiBaseURL == "" {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "API base URL is missing",
+			Detail:   "An API base URL is required to access the LiteLLM API.",
+		})
+		return nil, diags
+	}
+
 	client := &LitellmClient{}
 	client.ApiBaseURL = apiBaseURL
 	client.ApiToken = apiToken
