@@ -82,7 +82,7 @@ func TestResourceModelCreateUpdateDelete(t *testing.T) {
 	// Test Create
 	diags = p.ResourcesMap["litellm_model"].CreateContext(context.Background(), resourceData, meta)
 	assert.False(t, diags.HasError())
-	assert.Equal(t, "test-model", resourceData.Id())
+	assert.Equal(t, "unique-model-id", resourceData.Id())
 
 	// Test Update
 	diags = p.ResourcesMap["litellm_model"].UpdateContext(context.Background(), resourceData, meta)
