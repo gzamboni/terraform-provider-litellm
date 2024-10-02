@@ -55,15 +55,16 @@ func resourceModelCreate(ctx context.Context, d *schema.ResourceData, m interfac
 
 	modelName := d.Get("model_name").(string)
 	litellmParams := d.Get("litellm_params").(map[string]interface{})
-	modelInfo, _ := d.GetOk("model_info")
+	modelInfo, _ := d.Get("model_info").(map[string]interface{})
+
+	if modelInfo == nil || modelInfo["id"] == nil {
+		return diag.Errorf("model_info.id is required")
+	}
 
 	requestBody := map[string]interface{}{
 		"model_name":     modelName,
 		"litellm_params": litellmParams,
-	}
-
-	if modelInfo != nil {
-		requestBody["model_info"] = modelInfo
+		"model_info":     modelInfo,
 	}
 
 	jsonData, err := json.Marshal(requestBody)
@@ -91,7 +92,7 @@ func resourceModelCreate(ctx context.Context, d *schema.ResourceData, m interfac
 	}
 
 	// Set the ID of the resource
-	d.SetId(modelName)
+	d.SetId(modelInfo["id"].(string))
 
 	return diags
 }
@@ -111,15 +112,16 @@ func resourceModelUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 
 	modelName := d.Get("model_name").(string)
 	litellmParams := d.Get("litellm_params").(map[string]interface{})
-	modelInfo, _ := d.GetOk("model_info")
+	modelInfo, _ := d.Get("model_info").(map[string]interface{})
+
+	if modelInfo == nil || modelInfo["id"] == nil {
+		return diag.Errorf("model_info.id is required")
+	}
 
 	requestBody := map[string]interface{}{
 		"model_name":     modelName,
 		"litellm_params": litellmParams,
-	}
-
-	if modelInfo != nil {
-		requestBody["model_info"] = modelInfo
+		"model_info":     modelInfo,
 	}
 
 	jsonData, err := json.Marshal(requestBody)
@@ -154,10 +156,13 @@ func resourceModelDelete(ctx context.Context, d *schema.ResourceData, m interfac
 
 	var diags diag.Diagnostics
 
-	modelName := d.Get("model_name").(string)
+	modelInfo := d.Get("model_info").(map[string]interface{})
+	if modelInfo == nil || modelInfo["id"] == nil {
+		return diag.Errorf("model_info.id is required")
+	}
 
 	requestBody := map[string]interface{}{
-		"id": modelName,
+		"id": modelInfo["id"].(string),
 	}
 
 	jsonData, err := json.Marshal(requestBody)
