@@ -73,13 +73,10 @@ func resourceModelCreate(ctx context.Context, d *schema.ResourceData, m interfac
 	}
 
 	url := fmt.Sprintf("%s/model/new", client.ApiBaseURL)
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	req, err := client.NewRequest("POST", url, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", client.ApiToken))
-	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -130,13 +127,10 @@ func resourceModelUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 	}
 
 	url := fmt.Sprintf("%s/model/update", client.ApiBaseURL)
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	req, err := client.NewRequest("POST", url, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", client.ApiToken))
-	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -171,13 +165,10 @@ func resourceModelDelete(ctx context.Context, d *schema.ResourceData, m interfac
 	}
 
 	url := fmt.Sprintf("%s/model/delete", client.ApiBaseURL)
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	req, err := client.NewRequest("POST", url, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", client.ApiToken))
-	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
