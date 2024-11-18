@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -11,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestResourceModelCreateUpdateDelete(t *testing.T) {
+func TestResourceModelCreateUpdateDeleteRead(t *testing.T) {
 	// Mock LiteLLM API server
 	apiToken := "test-token"
 
@@ -50,6 +51,38 @@ func TestResourceModelCreateUpdateDelete(t *testing.T) {
 		w.Write([]byte(`{}`))
 	})
 
+	mux.HandleFunc("/model/info", func(w http.ResponseWriter, r *http.Request) {
+		readOutput := map[string]interface{}{
+			"data": map[string]interface{}{"model_name": "test-model",
+				"model_info": map[string]string{
+					"id":         "unique-model-id",
+					"base_model": "gpt-3.5-turbo",
+					"tier":       "paid",
+				},
+				"litellm_params": map[string]string{
+					"custom_llm_provider": "openai",
+					"model":               "gpt-3.5-turbo",
+					"api_key":             "underlying-api-key",
+				},
+			},
+		}
+
+		jsonOutput, err := json.Marshal(readOutput)
+		if err != nil {
+			panic(err)
+		}
+
+		token := r.Header.Get("Authorization")
+		expectedToken := fmt.Sprintf("Bearer %s", apiToken)
+		assert.Equal(t, expectedToken, token)
+
+		litellm_model_id := r.URL.Query().Get("litellm_model_id")
+		assert.Equal(t, "unique-model-id", litellm_model_id)
+
+		w.WriteHeader(http.StatusOK)
+		w.Write(jsonOutput)
+	})
+
 	// Configure the provider with the mock server URL
 	p := NewProvider()
 
@@ -66,19 +99,14 @@ func TestResourceModelCreateUpdateDelete(t *testing.T) {
 	}
 
 	resourceData := schema.TestResourceDataRaw(t, p.ResourcesMap["litellm_model"].Schema, map[string]interface{}{
-		"model_name": "test-model",
-		"litellm_params": map[string]interface{}{
-			"custom_llm_provider": "openai",
-			"model":               "gpt-3.5-turbo",
-			"api_key":             "underlying-api-key",
-		},
-		"model_info": map[string]interface{}{
-			"id":         "unique-model-id",
-			"base_model": "gpt-3.5-turbo",
-			"tier":       "paid",
-		},
+		"model_name":                         "test-model",
+		"model_info_id":                      "unique-model-id",
+		"model_info_base_model":              "gpt-3.5-turbo",
+		"model_info_tier":                    "paid",
+		"litellm_params_custom_llm_provider": "openai",
+		"litellm_params_model":               "gpt-3.5-turbo",
+		"litellm_params_api_key":             "underlying-api-key",
 	})
-
 	// Test Create
 	diags = p.ResourcesMap["litellm_model"].CreateContext(context.Background(), resourceData, meta)
 	assert.False(t, diags.HasError())
@@ -92,4 +120,8 @@ func TestResourceModelCreateUpdateDelete(t *testing.T) {
 	diags = p.ResourcesMap["litellm_model"].DeleteContext(context.Background(), resourceData, meta)
 	assert.False(t, diags.HasError())
 	assert.Equal(t, "", resourceData.Id())
+
+	// Test Read
+	diags = p.ResourcesMap["litellm_model"].ReadContext(context.Background(), resourceData, meta)
+	assert.False(t, diags.HasError())
 }

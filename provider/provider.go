@@ -27,6 +27,9 @@ func NewProvider() *schema.Provider {
 		ResourcesMap: map[string]*schema.Resource{
 			"litellm_model": resourceModel(),
 		},
+		DataSourcesMap: map[string]*schema.Resource{
+			"litellm_model": datasourceModel(),
+		},
 		ConfigureContextFunc: providerConfigure,
 	}
 }
