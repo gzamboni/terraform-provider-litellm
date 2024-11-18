@@ -76,18 +76,6 @@ var ResourceTeamSchema = map[string]*schema.Schema{
 	},
 }
 
-type Team struct {
-	TeamAlias      string            `json:"team_alias,omitempty"`
-	TeamId         string            `json:"team_id,omitempty"`
-	Metadata       map[string]string `json:"metadata,omitempty"`
-	TpmLimit       int               `json:"tpm_limit,omitempty"`
-	RpmLimit       int               `json:"rpm_limit,omitempty"`
-	MaxBudget      float64           `json:"max_budget,omitempty"`
-	BudgetDuration string            `json:"budget_duration,omitempty"`
-	Models         []string          `json:"models,omitempty"`
-	Blocked        bool              `json:"blocked,omitempty"`
-}
-
 func resourceTeam() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceTeamCreate,
@@ -98,7 +86,7 @@ func resourceTeam() *schema.Resource {
 	}
 }
 
-func getTeamFromResourceData(d *schema.ResourceData) Team {
+func getTeamFromResourceData(d *schema.ResourceData) litellm.Team {
 	m := d.Get("metadata").(map[string]interface{})
 	metadata := make(map[string]string)
 	for k, v := range m {
@@ -111,7 +99,7 @@ func getTeamFromResourceData(d *schema.ResourceData) Team {
 		models = append(models, fmt.Sprintf("%v", value))
 	}
 
-	team := Team{
+	team := litellm.Team{
 		TeamAlias:      d.Get("team_alias").(string),
 		TeamId:         d.Get("team_id").(string),
 		Metadata:       metadata,
