@@ -30,9 +30,5 @@ bin/
 
 dist/
 terraform-provider-litellm
-<<<<<<< HEAD
-.vscode
-=======
 .vscode
 provider.json
->>>>>>> add_litellm_team_api

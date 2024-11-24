@@ -103,12 +103,8 @@ func resourceUser() *schema.Resource {
 		UpdateContext: resourceUserUpdate,
 		DeleteContext: resourceUserDelete,
 		Schema:        UserSchema(),
+		Description:   `The resource user allow you to create/delete/update/import a user in your litellm instance.`,
 	}
-}
-
-func strToRole(v interface{}) interface{} {
-	role, _ := litellm.ValidateRole(v.(string))
-	return role
 }
 
 func fromResourceDataGetUser(d *schema.ResourceData) litellm.User {
