@@ -83,6 +83,7 @@ func resourceTeam() *schema.Resource {
 		UpdateContext: resourceTeamUpdate,
 		DeleteContext: resourceTeamDelete,
 		Schema:        ResourceTeamSchema,
+		Description:   "This resource allow you to create/update/delete/import a team in your litellm instance.",
 	}
 }
 
