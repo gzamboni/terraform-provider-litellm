@@ -45,3 +45,6 @@ release: ## Release the provider
 	@echo "Releasing version ${NEXT_VERSION}"
 	git tag -a ${NEXT_VERSION} -m "Release ${NEXT_VERSION}"
 	git push origin ${NEXT_VERSION}
+
+doc:
+	tfplugindocs generate
