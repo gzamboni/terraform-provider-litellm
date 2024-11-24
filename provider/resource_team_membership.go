@@ -28,7 +28,7 @@ var SchemaTeamMembership = map[string]*schema.Schema{
 	"role": {
 		Type:        schema.TypeString,
 		Required:    true,
-		Description: "Litellm Role",
+		Description: "Litellm Role for the user in the team. Role `proxy_admin` and role `proxy_admin_viewer` are not allowed in this role field. These roles don't exist in a team.",
 		ForceNew:    true,
 		ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
 			value := val.(string)
@@ -66,6 +66,10 @@ func resourceTeamMembership() *schema.Resource {
 		// UpdateContext: resourceTeamMembershipUpdate,
 		DeleteContext: resourceTeamMembershipDelete,
 		Schema:        SchemaTeamMembership,
+		Description: `This resource allow your to Create/Delete/Import a team membership. 
+		This resource doesn't support max_budget_in_team because it doesnt seems to work right now (2024-11-24). 
+		
+		Also take into account, the underlying LITELLM API used by this resource is in preview, bugs can happen.`,
 	}
 }
 
