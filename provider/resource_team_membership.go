@@ -28,18 +28,13 @@ var SchemaTeamMembership = map[string]*schema.Schema{
 	"role": {
 		Type:        schema.TypeString,
 		Required:    true,
-		Description: "Litellm Role for the user in the team. Role `proxy_admin` and role `proxy_admin_viewer` are not allowed in this role field. These roles don't exist in a team.",
+		Description: "Team role for the user in the team. Only roles `admin` and role `user` are valid in this field.",
 		ForceNew:    true,
 		ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
 			value := val.(string)
-			role, isValidated := litellm.ValidateRole(value)
-			if !isValidated {
-				errs = append(errs, fmt.Errorf("Provided role should be in this list %v", litellm.ROLE_LIST))
+			if value != "admin" && value != "user" {
+				errs = append(errs, fmt.Errorf("only roles `admin` and `user` are authorized in this field."))
 			}
-			if role == litellm.PROXY_ADMIN || role == litellm.PROXY_ADMIN_VIEWER {
-				errs = append(errs, fmt.Errorf("proxy_admin and proxy_admin_viewer cannot be set to associate a team with an user"))
-			}
-
 			return warns, errs
 		},
 	},
@@ -78,13 +73,9 @@ func resourceTeamMembershipCreate(ctx context.Context, d *schema.ResourceData, m
 
 	var diags diag.Diagnostics
 
-	dataRole := d.Get("role").(string)
+	role := d.Get("role").(string)
 	teamId := d.Get("team_id").(string)
 	userId := d.Get("user_id").(string)
-	role, isValidated := litellm.ValidateRole(dataRole)
-	if !isValidated {
-		diag.Errorf("%s is not a valid role", dataRole)
-	}
 
 	apiUrl := fmt.Sprintf("%s/team/member_add", client.ApiBaseURL)
 

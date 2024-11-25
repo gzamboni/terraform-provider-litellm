@@ -3,7 +3,7 @@ package litellm
 import "errors"
 
 type TeamMembershipMemberRole struct {
-	Role      Role   `json:"role"`
+	Role      string `json:"role"`
 	UserId    string `json:"user_id,omitempty"`
 	UserEmail string `json:"user_email,omitempty"`
 }

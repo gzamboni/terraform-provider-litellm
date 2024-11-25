@@ -30,7 +30,7 @@ resource "litellm_team_membership" "example_user_team_association" {
 
 ### Required
 
-- `role` (String) Litellm Role for the user in the team. Role `proxy_admin` and role `proxy_admin_viewer` are not allowed in this role field. These roles don't exist in a team.
+- `role` (String) Team role for the user in the team. Only roles `admin` and role `user` are valid in this field.
 - `team_id` (String) Team ID
 - `user_id` (String) User ID
 
