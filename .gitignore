@@ -30,3 +30,5 @@ bin/
 
 dist/
 terraform-provider-litellm
+.vscode
+provider.json
