@@ -61,6 +61,20 @@ func resourceModelCreate(ctx context.Context, d *schema.ResourceData, m interfac
 		return diag.Errorf("model_info.id is required")
 	}
 
+	if litellmParams["extra_headers"] != nil {
+		// decode json string to map[string]string
+		var extraHeaders map[string]string
+		var extraHeadersString string
+
+		extraHeadersString = litellmParams["extra_headers"].(string)
+		err := json.Unmarshal([]byte(extraHeadersString), &extraHeaders)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		litellmParams["extra_headers"] = extraHeaders
+		d.Set("litellm_params", litellmParams)
+	}
+
 	requestBody := map[string]interface{}{
 		"model_name":     modelName,
 		"litellm_params": litellmParams,
@@ -95,10 +109,32 @@ func resourceModelCreate(ctx context.Context, d *schema.ResourceData, m interfac
 }
 
 func resourceModelRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	client := m.(*LitellmClient)
 	var diags diag.Diagnostics
-	// Implement the Read function if the API supports it
 
-	// For now, we'll assume the resource always exists
+	modelInfo := d.Get("model_info").(map[string]interface{})
+	if modelInfo == nil || modelInfo["id"] == nil {
+		return diag.Errorf("model_info.id is required")
+	}
+
+	url := fmt.Sprintf("%s/model/info?litellm_model_id=%s", client.ApiBaseURL, modelInfo["id"].(string))
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", client.ApiToken))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return diag.Errorf("API request failed with status code %d", resp.StatusCode)
+	}
+
 	return diags
 }
 
@@ -113,6 +149,20 @@ func resourceModelUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 
 	if modelInfo == nil || modelInfo["id"] == nil {
 		return diag.Errorf("model_info.id is required")
+	}
+
+	if litellmParams["extra_headers"] != nil {
+		// decode json string to map[string]string
+		var extraHeaders map[string]interface{}
+		var extraHeadersString string
+
+		extraHeadersString = litellmParams["extra_headers"].(string)
+		err := json.Unmarshal([]byte(extraHeadersString), &extraHeaders)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		litellmParams["extra_headers"] = &extraHeaders
+		d.Set("litellm_params", litellmParams)
 	}
 
 	requestBody := map[string]interface{}{
