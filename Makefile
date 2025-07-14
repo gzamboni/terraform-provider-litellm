@@ -18,7 +18,7 @@ default: install
 build: ## Build the provider
 	GOOS=${GOOS} GOARCH=${GOARCH} go build -o ${BINARY}
 
-release: ### Build and release binaries
+build_release: ### Build and release binaries
 	GOOS=darwin GOARCH=amd64 go build -o ./bin/${BINARY}_${VERSION}_darwin_amd64
 	GOOS=darwin GOARCH=arm64 go build -o ./bin/${BINARY}_${VERSION}_darwin_amd64
 	GOOS=freebsd GOARCH=386 go build -o ./bin/${BINARY}_${VERSION}_freebsd_386
