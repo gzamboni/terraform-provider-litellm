@@ -141,11 +141,10 @@ func resourceRouterSettingsUpdate(ctx context.Context, d *schema.ResourceData, m
 		"retry_after":           d.Get("retry_after").(int),
 	}
 
-	// Handle fallbacks
-	if fallbacksRaw, ok := d.GetOk("fallbacks"); ok {
+	// Helper function to convert fallback models
+	extractFallbackModels := func(fallbacksRaw interface{}) []map[string]interface{} {
 		fallbacksList := fallbacksRaw.([]interface{})
-		fallbacks := make([]map[string]interface{}, 0)
-
+		var fallbacks []map[string]interface{}
 		for _, fallbackRaw := range fallbacksList {
 			fallbackMap := fallbackRaw.(map[string]interface{})
 			primaryModel := fallbackMap["primary_model"].(string)
@@ -161,32 +160,19 @@ func resourceRouterSettingsUpdate(ctx context.Context, d *schema.ResourceData, m
 			}
 			fallbacks = append(fallbacks, fallbackConfig)
 		}
-		routerSettings["fallbacks"] = fallbacks
+		return fallbacks
+	}
+
+	// Handle fallbacks
+	if fallbacksRaw, ok := d.GetOk("fallbacks"); ok {
+		routerSettings["fallbacks"] = extractFallbackModels(fallbacksRaw)
 	} else {
 		routerSettings["fallbacks"] = nil
 	}
 
 	// Handle context window fallbacks
 	if contextFallbacksRaw, ok := d.GetOk("context_window_fallbacks"); ok {
-		contextFallbacksList := contextFallbacksRaw.([]interface{})
-		contextFallbacks := make([]map[string]interface{}, 0)
-
-		for _, fallbackRaw := range contextFallbacksList {
-			fallbackMap := fallbackRaw.(map[string]interface{})
-			primaryModel := fallbackMap["primary_model"].(string)
-			fallbackModelsRaw := fallbackMap["fallback_models"].([]interface{})
-
-			fallbackModels := make([]string, len(fallbackModelsRaw))
-			for i, model := range fallbackModelsRaw {
-				fallbackModels[i] = model.(string)
-			}
-
-			fallbackConfig := map[string]interface{}{
-				primaryModel: fallbackModels,
-			}
-			contextFallbacks = append(contextFallbacks, fallbackConfig)
-		}
-		routerSettings["context_window_fallbacks"] = contextFallbacks
+		routerSettings["context_window_fallbacks"] = extractFallbackModels(contextFallbacksRaw)
 	} else {
 		routerSettings["context_window_fallbacks"] = nil
 	}
@@ -210,12 +196,19 @@ func resourceRouterSettingsUpdate(ctx context.Context, d *schema.ResourceData, m
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", client.ApiToken))
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	httpClient := &http.Client{
+		Timeout: 30 * 1000 * 1000 * 1000, // 30 seconds
+	}
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	defer resp.Body.Close()
-
+	if resp.StatusCode != http.StatusOK {
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(resp.Body)
+		respBody := buf.String()
+		return diag.Errorf("Failed to update router settings: status code %d, response: %s", resp.StatusCode, respBody)
+	}
 	if resp.StatusCode != http.StatusOK {
 		return diag.Errorf("API request failed with status code %d", resp.StatusCode)
 	}
