@@ -10,9 +10,17 @@ of AI model management into your infrastructure as code workflow.
 
 # Litellm Proxy Provider
 
-The **LiteLLM Proxy Terraform Provider** allows you to manage models in your LiteLLM Proxy instance using Terraform.
-With this provider, you can automate the creation, updating, and deletion of AI models, enabling seamless integration
-of AI model management into your infrastructure as code workflow.
+The **LiteLLM Proxy Terraform Provider** allows you to manage models and router settings in your LiteLLM Proxy instance using Terraform.
+With this provider, you can automate the creation, updating, and deletion of AI models, as well as configure routing behavior,
+load balancing strategies, and fallback configurations, enabling seamless integration of AI model management into your
+infrastructure as code workflow.
+
+## Features
+
+- **Model Management**: Create, update, and delete AI models in your LiteLLM proxy
+- **Router Configuration**: Configure routing strategies, retry policies, timeouts, and fallback models
+- **Load Balancing**: Support for multiple routing strategies including simple-shuffle, least-busy, usage-based, and latency-based routing
+- **High Availability**: Configure model fallbacks and context window fallbacks for resilient AI deployments
 
 ## Example Usage
 
