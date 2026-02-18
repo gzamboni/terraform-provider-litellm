@@ -113,8 +113,9 @@ func NewProvider() *schema.Provider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"litellm_model":          resourceModel(),
+			"litellm_model":           resourceModel(),
 			"litellm_router_settings": resourceRouterSettings(),
+			"litellm_fallback":        resourceFallback(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}
