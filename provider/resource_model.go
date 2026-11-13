@@ -9,6 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/structure"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
@@ -18,6 +19,7 @@ func resourceModel() *schema.Resource {
 		ReadContext:   resourceModelRead,
 		UpdateContext: resourceModelUpdate,
 		DeleteContext: resourceModelDelete,
+		CustomizeDiff: resourceModelCustomizeDiff,
 		Schema: map[string]*schema.Schema{
 			"id": {
 				Type:        schema.TypeString,
@@ -48,8 +50,9 @@ func resourceModel() *schema.Resource {
 			"litellm_params_json": {
 				Type:             schema.TypeString,
 				Optional:         true,
-				Description:      "JSON object of LiteLLM parameters whose values are not strings, such as `complexity_router_config` or `cache_control_injection_points`. Sent as is and merged into `litellm_params`; a key may be set in only one of the two.",
+				Description:      "JSON object of LiteLLM parameters whose values are objects, arrays, numbers or booleans, such as `complexity_router_config` or `cache_control_injection_points`. Merged into `litellm_params`; a key may be set in only one of the two. Removing a key replaces the model, because LiteLLM keeps the parameters an update omits.",
 				ValidateDiagFunc: validation.ToDiagFunc(validateJSONObject),
+				DiffSuppressFunc: structure.SuppressJsonDiff,
 			},
 		},
 	}
@@ -61,6 +64,10 @@ func parseJSONObject(raw string) (map[string]json.RawMessage, error) {
 	if err := json.Unmarshal([]byte(raw), &object); err != nil {
 		return nil, fmt.Errorf("must be a JSON object: %w", err)
 	}
+	// The literal null decodes without error and leaves the map nil.
+	if object == nil {
+		return nil, fmt.Errorf("must be a JSON object, got null")
+	}
 	return object, nil
 }
 
@@ -69,6 +76,63 @@ func validateJSONObject(value interface{}, key string) ([]string, []error) {
 		return nil, []error{fmt.Errorf("%s %w", key, err)}
 	}
 	return nil, nil
+}
+
+// structuredParams decodes litellm_params_json. Unset holds no parameters.
+func structuredParams(raw string) (map[string]json.RawMessage, error) {
+	if raw == "" {
+		return nil, nil
+	}
+	return parseJSONObject(raw)
+}
+
+func duplicateParam(params map[string]interface{}, structured map[string]json.RawMessage) error {
+	for key := range structured {
+		if _, duplicate := params[key]; duplicate {
+			return fmt.Errorf("%q is set in both litellm_params and litellm_params_json", key)
+		}
+	}
+	return nil
+}
+
+// resourceModelCustomizeDiff reports at plan time what an apply cannot do.
+//
+// A key set in both attributes is an error. A key dropped from
+// litellm_params_json replaces the model: LiteLLM's /model/update keeps every
+// stored parameter the request omits, and treats an explicit null the same
+// way, so an update cannot remove one.
+func resourceModelCustomizeDiff(ctx context.Context, d *schema.ResourceDiff, m interface{}) error {
+	// Values unknown until apply cannot be compared; create and update repeat
+	// the duplicate check once they are known.
+	if !d.NewValueKnown("litellm_params") || !d.NewValueKnown("litellm_params_json") {
+		return nil
+	}
+
+	previousJSON, plannedJSON := d.GetChange("litellm_params_json")
+	params := d.Get("litellm_params").(map[string]interface{})
+	planned, err := structuredParams(plannedJSON.(string))
+	if err != nil {
+		return fmt.Errorf("litellm_params_json %w", err)
+	}
+	if err := duplicateParam(params, planned); err != nil {
+		return err
+	}
+
+	if d.Id() == "" {
+		return nil
+	}
+	previous, err := structuredParams(previousJSON.(string))
+	if err != nil {
+		return fmt.Errorf("litellm_params_json in state %w", err)
+	}
+	for key := range previous {
+		_, kept := planned[key]
+		_, moved := params[key]
+		if !kept && !moved {
+			return d.ForceNew("litellm_params_json")
+		}
+	}
+	return nil
 }
 
 // modelLitellmParams builds the litellm_params object sent to LiteLLM.
@@ -94,17 +158,14 @@ func modelLitellmParams(params map[string]interface{}, paramsJSON string) (map[s
 		merged["extra_headers"] = extraHeaders
 	}
 
-	if paramsJSON == "" {
-		return merged, nil
-	}
-	structured, err := parseJSONObject(paramsJSON)
+	structured, err := structuredParams(paramsJSON)
 	if err != nil {
 		return nil, fmt.Errorf("litellm_params_json %w", err)
 	}
+	if err := duplicateParam(params, structured); err != nil {
+		return nil, err
+	}
 	for key, value := range structured {
-		if _, duplicate := params[key]; duplicate {
-			return nil, fmt.Errorf("%q is set in both litellm_params and litellm_params_json", key)
-		}
 		merged[key] = value
 	}
 	return merged, nil

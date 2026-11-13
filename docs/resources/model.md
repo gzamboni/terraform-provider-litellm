@@ -75,13 +75,17 @@ resource "litellm_model" "auto_router" {
 
 ### Optional
 
-- `litellm_params_json` (String) JSON object of LiteLLM parameters whose values are not strings, such as `complexity_router_config` or `cache_control_injection_points`. Sent as is and merged into `litellm_params`; a key may be set in only one of the two.
+- `litellm_params_json` (String) JSON object of LiteLLM parameters whose values are objects, arrays, numbers or booleans, such as `complexity_router_config` or `cache_control_injection_points`. Merged into `litellm_params`; a key may be set in only one of the two. Removing a key replaces the model, because LiteLLM keeps the parameters an update omits.
 - `model_info` (Map of String) Additional model information.
 
 ### Read-Only
 
 - `id` (String) The ID of the model.
 
+
+## Changes made outside Terraform
+
+The provider does not read model parameters back from LiteLLM. `litellm_params`, `litellm_params_json` and `model_info` keep the values from the configuration, so a change made to the model outside Terraform is not detected by `terraform plan`.
 
 ## Import
 
