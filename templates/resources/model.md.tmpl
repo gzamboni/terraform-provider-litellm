@@ -24,6 +24,10 @@ maintaining consistency and version control through Terraform's declarative conf
 ## Example Usage
 {{ tffile "examples/resources/litellm_model/resource.tf" }}
 {{ .SchemaMarkdown }}
+## Changes made outside Terraform
+
+The provider does not read model parameters back from LiteLLM. `litellm_params`, `litellm_params_json` and `model_info` keep the values from the configuration, so a change made to the model outside Terraform is not detected by `terraform plan`.
+
 ## Import
 
 {{ codefile "shell" "examples/resources/litellm_model/import.sh" }}
