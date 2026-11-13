@@ -14,3 +14,28 @@ resource "litellm_model" "example" {
     tier       = "paid"
   }
 }
+
+# Parameters LiteLLM expects as objects or arrays go in `litellm_params_json`.
+resource "litellm_model" "auto_router" {
+  model_name = "smart-router"
+
+  litellm_params = {
+    model                           = "auto_router/complexity_router"
+    complexity_router_default_model = "example-model"
+  }
+
+  litellm_params_json = jsonencode({
+    complexity_router_config = {
+      tiers = {
+        SIMPLE    = "example-model"
+        MEDIUM    = "example-model"
+        COMPLEX   = "example-model"
+        REASONING = "example-model"
+      }
+    }
+  })
+
+  model_info = {
+    id = "smart-router-id"
+  }
+}

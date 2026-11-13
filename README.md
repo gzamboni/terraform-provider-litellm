@@ -128,6 +128,7 @@ resource "litellm_model" "example" {
 
 - `model_name` (Required, String): The name of the model to manage in LiteLLM.
 - `litellm_params` (Required, Map of Strings): Parameters for the model as per LiteLLM API. This should include the underlying model details and any necessary credentials.
+- `litellm_params_json` (Optional, String): JSON object of LiteLLM parameters whose values are objects, arrays, numbers or booleans, such as `complexity_router_config`. Build it with `jsonencode`. It is merged into `litellm_params`; a key may be set in only one of the two.
 - `model_info` (Optional, Map of Strings): Additional model information, such as `id`, `base_model`, and `tier`.
 
 #### Attributes Reference

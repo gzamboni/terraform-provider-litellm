@@ -9,6 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func resourceModel() *schema.Resource {
@@ -44,8 +45,69 @@ func resourceModel() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"litellm_params_json": {
+				Type:             schema.TypeString,
+				Optional:         true,
+				Description:      "JSON object of LiteLLM parameters whose values are not strings, such as `complexity_router_config` or `cache_control_injection_points`. Sent as is and merged into `litellm_params`; a key may be set in only one of the two.",
+				ValidateDiagFunc: validation.ToDiagFunc(validateJSONObject),
+			},
 		},
 	}
+}
+
+// parseJSONObject decodes a JSON object, keeping every value as written.
+func parseJSONObject(raw string) (map[string]json.RawMessage, error) {
+	var object map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(raw), &object); err != nil {
+		return nil, fmt.Errorf("must be a JSON object: %w", err)
+	}
+	return object, nil
+}
+
+func validateJSONObject(value interface{}, key string) ([]string, []error) {
+	if _, err := parseJSONObject(value.(string)); err != nil {
+		return nil, []error{fmt.Errorf("%s %w", key, err)}
+	}
+	return nil, nil
+}
+
+// modelLitellmParams builds the litellm_params object sent to LiteLLM.
+//
+// params is sent as strings, except extra_headers, which is a JSON-encoded
+// object of strings. paramsJSON carries the values LiteLLM does not accept as
+// strings (objects, arrays) and is sent verbatim. Decoding is opt-in per value
+// rather than applied to every string that happens to hold JSON: LiteLLM
+// encrypts string params at rest and stores structured ones as they are, so a
+// JSON-shaped secret such as vertex_credentials must stay a string.
+func modelLitellmParams(params map[string]interface{}, paramsJSON string) (map[string]interface{}, error) {
+	// A new map: params belongs to the resource data and must keep its strings.
+	merged := make(map[string]interface{}, len(params))
+	for key, value := range params {
+		merged[key] = value
+	}
+
+	if raw, ok := params["extra_headers"]; ok {
+		var extraHeaders map[string]string
+		if err := json.Unmarshal([]byte(raw.(string)), &extraHeaders); err != nil {
+			return nil, fmt.Errorf("litellm_params.extra_headers must be a JSON object of strings: %w", err)
+		}
+		merged["extra_headers"] = extraHeaders
+	}
+
+	if paramsJSON == "" {
+		return merged, nil
+	}
+	structured, err := parseJSONObject(paramsJSON)
+	if err != nil {
+		return nil, fmt.Errorf("litellm_params_json %w", err)
+	}
+	for key, value := range structured {
+		if _, duplicate := params[key]; duplicate {
+			return nil, fmt.Errorf("%q is set in both litellm_params and litellm_params_json", key)
+		}
+		merged[key] = value
+	}
+	return merged, nil
 }
 
 func resourceModelCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -61,18 +123,9 @@ func resourceModelCreate(ctx context.Context, d *schema.ResourceData, m interfac
 		return diag.Errorf("model_info.id is required")
 	}
 
-	if litellmParams["extra_headers"] != nil {
-		// decode json string to map[string]string
-		var extraHeaders map[string]string
-		var extraHeadersString string
-
-		extraHeadersString = litellmParams["extra_headers"].(string)
-		err := json.Unmarshal([]byte(extraHeadersString), &extraHeaders)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		litellmParams["extra_headers"] = extraHeaders
-		d.Set("litellm_params", litellmParams)
+	litellmParams, err := modelLitellmParams(litellmParams, d.Get("litellm_params_json").(string))
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	requestBody := map[string]interface{}{
@@ -151,18 +204,9 @@ func resourceModelUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 		return diag.Errorf("model_info.id is required")
 	}
 
-	if litellmParams["extra_headers"] != nil {
-		// decode json string to map[string]string
-		var extraHeaders map[string]interface{}
-		var extraHeadersString string
-
-		extraHeadersString = litellmParams["extra_headers"].(string)
-		err := json.Unmarshal([]byte(extraHeadersString), &extraHeaders)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		litellmParams["extra_headers"] = &extraHeaders
-		d.Set("litellm_params", litellmParams)
+	litellmParams, err := modelLitellmParams(litellmParams, d.Get("litellm_params_json").(string))
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	requestBody := map[string]interface{}{
